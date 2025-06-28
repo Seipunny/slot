@@ -4,25 +4,17 @@ using TMPro;
 
 public class GameManager : MonoBehaviour
 {
-    [SerializeField] private PlayerDiceLogic playerSlot;
-    [SerializeField] private BotDiceLogic botSlot;
     [SerializeField] private TextMeshProUGUI gameStatusText;
     [SerializeField] private GameObject gameEndWindow;
     [SerializeField] private TextMeshProUGUI resultText;
 
     private bool isPlayerTurn = true;
     private const int WINNING_SCORE = 500;
-    private Button playerSpinButton; // Ссылка на кнопку Spin игрока
+    private Button playerSpinButton; // пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ Spin пїЅпїЅпїЅпїЅпїЅпїЅ
     private bool isGameOver = false;
 
     void Start()
     {
-        if (playerSlot == null || botSlot == null || gameStatusText == null)
-        {
-            Debug.LogError("Please assign all required components in the GameManager inspector!");
-            return;
-        }
-
         UpdateGameStatus();
     }
 
@@ -41,7 +33,7 @@ public class GameManager : MonoBehaviour
         return !isPlayerTurn && !isGameOver;
     }
 
-    // В GameManager
+    // пїЅ GameManager
     public void OnPlayerTurnEnd(int playerBalance)
     {
         Debug.Log($"OnPlayerTurnEnd called with balance: {playerBalance}, isGameOver: {isGameOver}");
@@ -84,31 +76,18 @@ public class GameManager : MonoBehaviour
 
     private void CheckWinCondition()
     {
-        if (playerSlot.GetTotalBalance() >= WINNING_SCORE)
-        {
-            EndGame("Player wins!");
-        }
-        else if (botSlot.GetTotalBalance() >= WINNING_SCORE)
-        {
-            EndGame("Bot wins!");
-        }
+        
     }
 
     private void EndGame(string winner)
     {
-        isGameOver = true; // Устанавливаем флаг окончания игры
+        isGameOver = true; // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ
         Debug.Log(winner);
         gameStatusText.text = $"{winner} Game Over!";
-        playerSlot.enabled = false;
-        botSlot.enabled = false;
+        
 
         gameEndWindow.SetActive(true);
         resultText.text = $"{winner}";
-    }
-
-    private bool IsGameOver()
-    {
-        return isGameOver;
     }
 
     private void UpdateGameStatus()
@@ -120,21 +99,9 @@ public class GameManager : MonoBehaviour
 
     public void RestartGame()
     {
-        // Сбрасываем флаги игры
         isGameOver = false;
         isPlayerTurn = true;
-
-        // Останавливаем и перезапускаем состояние игрока и бота
-        playerSlot.RestartGame();
-        botSlot.RestartGame();
-
-        // Убеждаемся, что компоненты активны
-        playerSlot.enabled = true;
-        botSlot.enabled = true;
-
-        // Сбрасываем UI
         gameEndWindow.SetActive(false);
-
         UpdateGameStatus();
     }
 

@@ -37,7 +37,6 @@ public class UIManager : MonoBehaviour
 
     public void StopPVPPressed()
     {
-        canvasPVP.SetActive(false);
         canvasMenu.SetActive(true);
     }
 
@@ -167,7 +166,7 @@ public class UIManager : MonoBehaviour
 
     private void UpdateRegisterError(string message) => registerErrorText.text = message;
 
-    void Update() => fpsText.text = ((int)(1f / (deltaTime += (Time.unscaledDeltaTime - deltaTime) * 0.1f))).ToString();
+    void Update() => fpsText.text = "FPS: "+((int)(1f / (deltaTime += (Time.unscaledDeltaTime - deltaTime) * 0.1f))).ToString();
 
     [System.Serializable]
     private class UserData
