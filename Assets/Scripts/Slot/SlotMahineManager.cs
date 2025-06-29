@@ -204,33 +204,38 @@ public class SlotMahineManager : MonoBehaviour
             return;
         }
         
-        bool damageDealt = false; // Флаг для отслеживания нанесения урона
+        int totalDamage = 0; // Суммарный урон за весь спин
         
-        // Проверяем каждый барабан на наличие урона
+        // Подсчитываем суммарный урон от всех барабанов
         for (int i = 0; i < currentResults.Length; i++)
         {
             int symbol = currentResults[i];
             
-            // GetDamage(1) при символах 1 или 7
+            // Урон 1 при символах 1 или 7
             if (symbol == 1 || symbol == 7)
             {
-                mobManager.GetDamage(1);
-                damageDealt = true;
-                Debug.Log($"Барабан {i + 1}: Символ {symbol} - нанесен урон 1");
+                totalDamage += 1;
+                Debug.Log($"Барабан {i + 1}: Символ {symbol} - добавлен урон 1");
             }
-            // GetDamage(2) при символе 4
+            // Урон 2 при символе 4
             else if (symbol == 4)
             {
-                mobManager.GetDamage(2);
-                damageDealt = true;
-                Debug.Log($"Барабан {i + 1}: Символ {symbol} - нанесен урон 2");
+                totalDamage += 2;
+                Debug.Log($"Барабан {i + 1}: Символ {symbol} - добавлен урон 2");
             }
         }
         
-        // Воспроизводим звук меча, если был нанесен урон
-        if (damageDealt && swordAudio != null)
+        // Наносим весь суммарный урон за один раз
+        if (totalDamage > 0)
         {
-            swordAudio.Play();
+            Debug.Log($"Общий урон за спин: {totalDamage}");
+            mobManager.GetDamage(totalDamage);
+            
+            // Воспроизводим звук меча
+            if (swordAudio != null)
+            {
+                swordAudio.Play();
+            }
         }
     }
     
