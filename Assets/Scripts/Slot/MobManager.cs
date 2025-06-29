@@ -1,4 +1,5 @@
 using UnityEngine;
+using TMPro; // Добавляем для TextMeshProUGUI
 
 public class MobManager : MonoBehaviour
 {
@@ -22,11 +23,17 @@ public class MobManager : MonoBehaviour
     [Header("Slot Machine")]
     public SlotMahineManager slotMachine; // Ссылка на слот-машину
     
+    [Header("Spins System")]
+    public int maxSpins = 25; // Максимальное количество спинов
+    private int currentSpins = 0; // Текущее количество спинов
+    public TextMeshProUGUI spinsText; // UI элемент для отображения спинов
+    
     [Header("Audio Sources")]
     public AudioSource damageAudio; // Звук получения урона
     public AudioSource deadAudio; // Звук смерти моба
     public AudioSource swordAudio; // Звук нанесения урона
     public AudioSource gameWinAudio; // Звук победы в игре
+    public AudioSource gameLoseAudio; // Звук поражения в игре
 
     void Start()
     {
@@ -44,10 +51,13 @@ public class MobManager : MonoBehaviour
     {
         curMobId = 0;
         curHp = 0;
+        currentSpins = 0; // Сбрасываем счетчик спинов
         Init();
         mobsObj.SetActive(true);
         hpObj.SetActive(true);
         startGameButton.SetActive(false);
+        
+        UpdateSpinsUI(); // Обновляем UI спинов
         
         // Запускаем автоматические спины с небольшой задержкой
         if (slotMachine != null)
@@ -65,6 +75,64 @@ public class MobManager : MonoBehaviour
         {
             slotMachine.StartAutoSpin();
         }
+    }
+    
+    /// <summary>
+    /// Вызывается при завершении каждого спина
+    /// </summary>
+    public void OnSpinCompleted()
+    {
+        currentSpins++;
+        UpdateSpinsUI();
+        
+        // Проверяем, не закончились ли спины
+        if (currentSpins >= maxSpins && curMobId >= 0)
+        {
+            // Поражение - закончились спины, но мобы еще живы
+            GameLose();
+        }
+    }
+    
+    /// <summary>
+    /// Обновляет UI отображение спинов
+    /// </summary>
+    private void UpdateSpinsUI()
+    {
+        if (spinsText != null)
+        {
+            int remainingSpins = maxSpins - currentSpins;
+            spinsText.text = $"{remainingSpins}/{maxSpins}";
+        }
+    }
+    
+    /// <summary>
+    /// Обработка поражения в игре
+    /// </summary>
+    private void GameLose()
+    {
+        Debug.Log("Поражение! Закончились спины.");
+        
+        // Воспроизводим звук поражения
+        if (gameLoseAudio != null)
+        {
+            gameLoseAudio.Play();
+        }
+        
+        // Останавливаем автоматические спины
+        if (slotMachine != null)
+        {
+            slotMachine.StopAutoSpin();
+        }
+        
+        // Сбрасываем игру
+        curMobId = -1;
+        curHp = -1;
+        currentSpins = 0;
+        mobsObj.SetActive(false);
+        hpObj.SetActive(false);
+        startGameButton.SetActive(true);
+        
+        UpdateSpinsUI();
     }
 
     void Init()
@@ -207,11 +275,31 @@ public class MobManager : MonoBehaviour
             {
                 slotMachine.StopAutoSpin();
             }
+            
+            // Сбрасываем счетчик спинов
+            currentSpins = 0;
+            UpdateSpinsUI();
         }
         else
         {
             Init();
         }
         
+    }
+    
+    /// <summary>
+    /// Получить текущее количество оставшихся спинов
+    /// </summary>
+    public int GetRemainingSpins()
+    {
+        return maxSpins - currentSpins;
+    }
+    
+    /// <summary>
+    /// Проверить, активна ли игра
+    /// </summary>
+    public bool IsGameActive()
+    {
+        return curMobId >= 0 && currentSpins < maxSpins;
     }
 }

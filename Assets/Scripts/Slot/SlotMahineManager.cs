@@ -178,6 +178,12 @@ public class SlotMahineManager : MonoBehaviour
         
         // Проверяем на выигрышные комбинации
         CheckWinConditions();
+        
+        // Уведомляем MobManager о завершении спина
+        if (mobManager != null && mobManager.IsGameActive())
+        {
+            mobManager.OnSpinCompleted();
+        }
     }
     
     /// <summary>
@@ -418,8 +424,8 @@ public class SlotMahineManager : MonoBehaviour
                 yield return null;
             }
             
-            // Проверяем что игра все еще активна и автоспины включены
-            if (autoSpinEnabled && mobManager != null && mobManager.gameObject.activeInHierarchy)
+            // Проверяем что игра все еще активна, автоспины включены и есть оставшиеся спины
+            if (autoSpinEnabled && mobManager != null && mobManager.gameObject.activeInHierarchy && mobManager.IsGameActive())
             {
                 Spin();
                 
@@ -429,15 +435,16 @@ public class SlotMahineManager : MonoBehaviour
                     yield return null;
                 }
                 
-                // Задержка перед следующим спином (только если автоспины все еще включены)
-                if (autoSpinEnabled)
+                // Задержка перед следующим спином (только если автоспины все еще включены и игра активна)
+                if (autoSpinEnabled && mobManager.IsGameActive())
                 {
                     yield return new WaitForSeconds(autoSpinDelay);
                 }
             }
             else
             {
-                // Если игра не активна, выходим из цикла
+                // Если игра не активна или закончились спины, выходим из цикла
+                autoSpinEnabled = false;
                 break;
             }
         }
