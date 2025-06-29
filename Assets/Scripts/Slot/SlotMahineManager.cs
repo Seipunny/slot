@@ -14,12 +14,23 @@ public class SlotMahineManager : MonoBehaviour
     [Header("Заданные результаты (если randomResults = false)")]
     public int[] predefinedResults = { 1, 1, 1 }; // Результаты для каждого барабана
     
+    [Header("Автоматические спины")]
+    public float autoSpinDelay = 1f; // Задержка между автоматическими спинами
+    
     [Header("Звуки")]
     public AudioSource audioSource; // Источник звука
     public AudioClip spinStartSound; // Звук старта спина
     public AudioClip spinEndSound; // Звук окончания всех барабанов
-    public HapticManager hapticManager; 
+    public HapticManager hapticManager;
+    
+    [Header("Mob Manager")]
+    public MobManager mobManager; // Ссылка на менеджер мобов
+    
+    [Header("Sword Audio")]
+    public AudioSource swordAudio; // Звук нанесения урона мечом
+    
     private bool isSpinning = false;
+    private bool autoSpinEnabled = false; // Включены ли автоматические спины
     private int[] currentResults = new int[3]; // Текущие результаты барабанов
     
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -80,8 +91,9 @@ public class SlotMahineManager : MonoBehaviour
         
         // Отслеживаем остановку каждого барабана отдельно
         bool[] reelsStopped = new bool[reels.Length];
+        int stoppedCount = 0;
         
-        while (!AllReelsStopped())
+        while (stoppedCount < reels.Length)
         {
             // Проверяем каждый барабан
             for (int i = 0; i < reels.Length; i++)
@@ -90,12 +102,13 @@ public class SlotMahineManager : MonoBehaviour
                 {
                     // Барабан только что остановился
                     reelsStopped[i] = true;
+                    stoppedCount++;
                     currentResults[i] = reels[i].GetCurrentSymbol();
                     
                     // Воспроизводим звук остановки барабана
                     PlayReelStopSound();
                     
-                    Debug.Log($"Барабан {i + 1} остановился на символе {currentResults[i]}");
+                    Debug.Log($"Барабан {i + 1} остановился на символе {currentResults[i]} (остановлено: {stoppedCount}/{reels.Length})");
                 }
             }
             
@@ -160,8 +173,59 @@ public class SlotMahineManager : MonoBehaviour
         
         Debug.Log($"Спин завершен! Результаты: {currentResults[0]}, {currentResults[1]}, {currentResults[2]}");
         
+        // Обрабатываем урон по мобам
+        ProcessDamage();
+        
         // Проверяем на выигрышные комбинации
         CheckWinConditions();
+    }
+    
+    /// <summary>
+    /// Обрабатывает урон по мобам в зависимости от выпавших символов
+    /// </summary>
+    private void ProcessDamage()
+    {
+        if (mobManager == null) 
+        {
+            Debug.LogWarning("MobManager не назначен в SlotMahineManager!");
+            return;
+        }
+        
+        // Дополнительная проверка на активность игры
+        if (!mobManager.gameObject.activeInHierarchy)
+        {
+            Debug.LogWarning("MobManager неактивен, пропускаем обработку урона");
+            return;
+        }
+        
+        bool damageDealt = false; // Флаг для отслеживания нанесения урона
+        
+        // Проверяем каждый барабан на наличие урона
+        for (int i = 0; i < currentResults.Length; i++)
+        {
+            int symbol = currentResults[i];
+            
+            // GetDamage(1) при символах 1 или 7
+            if (symbol == 1 || symbol == 7)
+            {
+                mobManager.GetDamage(1);
+                damageDealt = true;
+                Debug.Log($"Барабан {i + 1}: Символ {symbol} - нанесен урон 1");
+            }
+            // GetDamage(2) при символе 4
+            else if (symbol == 4)
+            {
+                mobManager.GetDamage(2);
+                damageDealt = true;
+                Debug.Log($"Барабан {i + 1}: Символ {symbol} - нанесен урон 2");
+            }
+        }
+        
+        // Воспроизводим звук меча, если был нанесен урон
+        if (damageDealt && swordAudio != null)
+        {
+            swordAudio.Play();
+        }
     }
     
     /// <summary>
@@ -317,5 +381,73 @@ public class SlotMahineManager : MonoBehaviour
     public void EnableRandomResults()
     {
         randomResults = true;
+    }
+    
+    /// <summary>
+    /// Запускает автоматические спины
+    /// </summary>
+    public void StartAutoSpin()
+    {
+        if (!autoSpinEnabled)
+        {
+            autoSpinEnabled = true;
+            StartCoroutine(AutoSpinCoroutine());
+            Debug.Log("Автоматические спины запущены");
+        }
+    }
+    
+    /// <summary>
+    /// Останавливает автоматические спины
+    /// </summary>
+    public void StopAutoSpin()
+    {
+        autoSpinEnabled = false;
+        Debug.Log("Автоматические спины остановлены");
+    }
+    
+    /// <summary>
+    /// Корутина для автоматических спинов
+    /// </summary>
+    private IEnumerator AutoSpinCoroutine()
+    {
+        while (autoSpinEnabled)
+        {
+            // Ждем пока предыдущий спин не закончится
+            while (isSpinning)
+            {
+                yield return null;
+            }
+            
+            // Проверяем что игра все еще активна и автоспины включены
+            if (autoSpinEnabled && mobManager != null && mobManager.gameObject.activeInHierarchy)
+            {
+                Spin();
+                
+                // Ждем пока спин не закончится
+                while (isSpinning)
+                {
+                    yield return null;
+                }
+                
+                // Задержка перед следующим спином (только если автоспины все еще включены)
+                if (autoSpinEnabled)
+                {
+                    yield return new WaitForSeconds(autoSpinDelay);
+                }
+            }
+            else
+            {
+                // Если игра не активна, выходим из цикла
+                break;
+            }
+        }
+    }
+    
+    /// <summary>
+    /// Проверяет, включены ли автоматические спины
+    /// </summary>
+    public bool IsAutoSpinEnabled()
+    {
+        return autoSpinEnabled;
     }
 }
