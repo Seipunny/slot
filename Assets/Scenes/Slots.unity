@@ -1878,7 +1878,7 @@ MonoBehaviour:
   swordAudio: {fileID: 1774851594}
   gameWinAudio: {fileID: 129952715}
   gameLoseAudio: {fileID: 1131231274}
-  playerBalance: {fileID: 0}
+  playerBalance: {fileID: 423171976}
 --- !u!114 &423171976
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3369,7 +3369,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: -106.77}
+  m_AnchoredPosition: {x: 0, y: -106.76999}
   m_SizeDelta: {x: 0, y: -213.53}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &691892836
